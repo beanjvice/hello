@@ -16,6 +16,7 @@ import {
   urlParam,
 } from "./util";
 import { decode, encode } from "./base64";
+import { useTranslation } from "react-i18next";
 
 enum GameState {
   Playing,
@@ -83,6 +84,7 @@ function parseUrlGameNumber(): number {
 }
 
 function Game(props: GameProps) {
+  const { t } = useTranslation();
   const [gameState, setGameState] = useState(GameState.Playing);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState<string>("");
@@ -100,8 +102,13 @@ function Game(props: GameProps) {
   const [hint, setHint] = useState<string>(
     challengeError
       ? `Invalid challenge string, playing random game.`
-      : `Make your first guess!`
+      : t('makeFirstGuess')
   );
+  useEffect(() => {
+    if (gameState === GameState.Playing && guesses.length === 0 && currentGuess === "" && !challengeError) {
+      setHint(t('makeFirstGuess'));
+    }
+  }, [t, gameState, guesses.length, currentGuess]);
   const currentSeedParams = () =>
     `?seed=${seed}&length=${wordLength}&game=${gameNumber}`;
   useEffect(() => {
@@ -175,11 +182,11 @@ function Game(props: GameProps) {
       setHint("");
     } else if (key === "Enter") {
       if (currentGuess.length !== wordLength) {
-        setHint("Too short");
+        setHint(t('tooShort'));
         return;
       }
       if (!dictionary.includes(currentGuess)) {
-        setHint("Not a valid word");
+        setHint(t("notValidWord"));
         return;
       }
       for (const g of guesses) {
@@ -193,16 +200,11 @@ function Game(props: GameProps) {
       setGuesses((guesses) => guesses.concat([currentGuess]));
       setCurrentGuess((guess) => "");
 
-      const gameOver = (verbed: string) =>
-        `You ${verbed}! The answer was ${target.toUpperCase()}. (Enter to ${
-          challenge ? "play a random game" : "play again"
-        })`;
-
       if (currentGuess === target) {
-        setHint(gameOver("won"));
+        setHint(`${t('youWon')} ${target.toUpperCase()}. (${challenge ? t('enterToPlayRandom') : t('enterToPlayAgain')})`);
         setGameState(GameState.Won);
       } else if (guesses.length + 1 === props.maxGuesses) {
-        setHint(gameOver("lost"));
+        setHint(`${t('youLost')} ${target.toUpperCase()}. (${challenge ? t('enterToPlayRandom') : t('enterToPlayAgain')})`);
         setGameState(GameState.Lost);
       } else {
         setHint("");
@@ -261,7 +263,7 @@ function Game(props: GameProps) {
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
       <div className="Game-options">
-        <label htmlFor="wordLength">Letters:</label>
+        <label htmlFor="wordLength">{t('letters')}</label>
         <input
           type="range"
           min={minLength}
@@ -281,21 +283,19 @@ function Game(props: GameProps) {
             setCurrentGuess("");
             setTarget(randomTarget(length));
             setWordLength(length);
-            setHint(`${length} letters`);
+            setHint(t('lettersCount', { count: length }));
           }}
         ></input>
         <button
           style={{ flex: "0 0 auto" }}
           disabled={gameState !== GameState.Playing || guesses.length === 0}
           onClick={() => {
-            setHint(
-              `The answer was ${target.toUpperCase()}. (Enter to play again)`
-            );
+            setHint(t('answerWas', { answer: target.toUpperCase() }));
             setGameState(GameState.Lost);
             (document.activeElement as HTMLElement)?.blur();
           }}
         >
-          Give up
+          {t('giveUp')}
         </button>
       </div>
       <table
@@ -322,18 +322,18 @@ function Game(props: GameProps) {
       />
       <div className="Game-seed-info">
         {challenge
-          ? "playing a challenge game"
+          ? t('playingChallenge')
           : seed
-          ? `${describeSeed(seed)} — length ${wordLength}, game ${gameNumber}`
-          : "playing a random game"}
+          ? t('seedInfo', { seed: describeSeed(seed), length: wordLength, number: gameNumber })
+          : t('playingRandom')}
       </div>
       <p>
         <button
           onClick={() => {
-            share("Link copied to clipboard!");
+            share(t('linkCopied'));
           }}
         >
-          Share a link to this game
+          {t('shareLinkButton')}
         </button>{" "}
         {gameState !== GameState.Playing && (
           <button
@@ -342,8 +342,7 @@ function Game(props: GameProps) {
                 ? ["⬛", "🟦", "🟧"]
                 : ["⬛", "🟨", "🟩"];
               const score = gameState === GameState.Lost ? "X" : guesses.length;
-              share(
-                "Result copied to clipboard!",
+              share(t('resultCopied'),
                 `${gameName} ${score}/${props.maxGuesses}\n` +
                   guesses
                     .map((guess) =>
@@ -355,7 +354,7 @@ function Game(props: GameProps) {
               );
             }}
           >
-            Share emoji results
+            {t('shareEmojiButton')}
           </button>
         )}
       </p>

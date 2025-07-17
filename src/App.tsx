@@ -3,6 +3,7 @@ import { maxGuesses, seed, urlParam } from "./util";
 import Game from "./Game";
 import { useEffect, useState } from "react";
 import { About } from "./About";
+import { useTranslation } from "react-i18next";
 
 function useSetting<T>(
   key: string,
@@ -46,6 +47,9 @@ function App() {
     "qwertyuiop-asdfghjkl-BzxcvbnmE"
   );
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
+  const [language, setLanguage] = useSetting<string>("language", "en");
+
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     document.body.className = dark ? "dark" : "";
@@ -57,6 +61,10 @@ function App() {
       document.body.style.transition = "0.3s background-color ease-out";
     }, 1);
   }, [dark]);
+
+  useEffect(() => {
+    i18n.changeLanguage(language);
+  }, [language, i18n]);
 
   const link = (emoji: string, label: string, page: Page) => (
     <button
@@ -84,11 +92,11 @@ function App() {
       </h1>
       <div className="top-right">
         {page !== "game" ? (
-          link("❌", "Close", "game")
+          link("❌", t('close'), "game")
         ) : (
           <>
-            {link("❓", "About", "about")}
-            {link("⚙️", "Settings", "settings")}
+            {link("❓", t('about'), "about")}
+            {link("⚙️", t('settings'), "settings")}
           </>
         )}
       </div>
@@ -101,7 +109,7 @@ function App() {
         }}
       >
         <a href={seed ? "?random" : "?seed=" + todaySeed}>
-          {seed ? "Random" : "Today's"}
+          {seed ? t('random') : t('todays')}
         </a>
       </div>
       {page === "about" && <About />}
@@ -114,7 +122,7 @@ function App() {
               checked={dark}
               onChange={() => setDark((x: boolean) => !x)}
             />
-            <label htmlFor="dark-setting">Dark theme</label>
+            <label htmlFor="dark-setting">{t('darkTheme')}</label>
           </div>
           <div className="Settings-setting">
             <input
@@ -123,7 +131,7 @@ function App() {
               checked={colorBlind}
               onChange={() => setColorBlind((x: boolean) => !x)}
             />
-            <label htmlFor="colorblind-setting">High-contrast colors</label>
+            <label htmlFor="colorblind-setting">{t('highContrastColors')}</label>
           </div>
           <div className="Settings-setting">
             <input
@@ -135,8 +143,8 @@ function App() {
               onChange={(e) => setDifficulty(+e.target.value)}
             />
             <div>
-              <label htmlFor="difficulty-setting">Difficulty:</label>
-              <strong>{["Normal", "Hard", "Ultra Hard"][difficulty]}</strong>
+              <label htmlFor="difficulty-setting">{t('difficulty')}:</label>
+              <strong>{[t('normal'), t('hard'), t('ultraHard')][difficulty]}</strong>
               <div
                 style={{
                   fontSize: 14,
@@ -146,17 +154,13 @@ function App() {
                 }}
               >
                 {
-                  [
-                    `Guesses must be valid dictionary words.`,
-                    `Wordle's "Hard Mode". Green letters must stay fixed, and yellow letters must be reused.`,
-                    `An even stricter Hard Mode. Yellow letters must move away from where they were clued, and gray clues must be obeyed.`,
-                  ][difficulty]
+                    [t('difficultyDesc1'), t('difficultyDesc2'), t('difficultyDesc3')][difficulty]
                 }
               </div>
             </div>
           </div>
           <div className="Settings-setting">
-            <label htmlFor="keyboard-setting">Keyboard layout:</label>
+            <label htmlFor="keyboard-setting">{t('keyboardLayout')}:</label>
             <select
               name="keyboard-setting"
               id="keyboard-setting"
@@ -176,9 +180,22 @@ function App() {
               checked={enterLeft}
               onChange={() => setEnterLeft((x: boolean) => !x)}
             />
-            <label htmlFor="enter-left-setting">"Enter" on left side</label>
+            <label htmlFor="enter-left-setting">{t('enterOnLeft')}</label>
           </div>
+          {}
+          <div className = "Settings-setting">
+            <label htmlFor="language-setting">{t('language')}:</label>
+            <select
+            name = "language-setting"
+            id = "language-setting"
+            value = {language}
+            onChange={(e) => setLanguage(e.target.value)}
+            >
+              <option value = "en">English</option>
+              <option value = "es">Español</option>
+            </select>
         </div>
+      </div>
       )}
       <Game
         maxGuesses={maxGuesses}
